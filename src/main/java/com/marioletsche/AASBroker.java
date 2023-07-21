@@ -2,12 +2,17 @@ package com.marioletsche;
 
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.json.simple.JSONObject;
+
+import com.marioletsche.Interfaces.Callback;
+import com.marioletsche.Interfaces.DataTransferManager;
+import com.marioletsche.Interfaces.NoSQLManager;
+
 import org.bson.types.ObjectId;
 
 
 public class AASBroker implements Callback {
-	MongoManager database;
-	MQTTManager data;
+	NoSQLManager database;
+	DataTransferManager data;
 	
 	public AASBroker() throws MqttException {
 		this.database = new MongoManager(this, "shells");
@@ -23,18 +28,30 @@ public class AASBroker implements Callback {
 		database.create(json);
 	}
 
+	/*
+	 * Once we receive the read message, the Data Manager calls this method to read from the database.
+	 */
 	@Override
 	public void callbackRead(ObjectId id) {
 		database.read(id);
 	}
 
+	/*
+	 * Belongs to the read function. Is called by the database with the information that was asked for.
+	 */
 	@Override
 	public void callbackSend(String json) {
-		try {
 			data.send(json);
-		} catch (MqttException e) {
-			System.err.println("Couldn't send the data to broker: " + e.getMessage());
-		}
+	}
+	
+	@Override
+	public void callbackUpdate(ObjectId id, JSONObject json) {
+		database.update(id, json);
+	}
+
+	@Override
+	public void callbackDelete(ObjectId id) {
+		database.delete(id);
 	}
 
 	/*
@@ -51,8 +68,6 @@ public class AASBroker implements Callback {
 				System.exit(0);
 			} catch (InterruptedException e) {
 				System.err.println("Thread got interrupted" + e.getMessage());
-			} catch (MqttException e) {
-				System.err.println("Data couldn't be closed properly." + e.getMessage());
 			}
 		});
 		thread.start();

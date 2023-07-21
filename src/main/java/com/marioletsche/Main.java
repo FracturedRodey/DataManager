@@ -38,6 +38,5 @@ public class Main {
 		if (broker != null) {
 			broker.close();
 		}
-		System.exit(0);
 	}
 }

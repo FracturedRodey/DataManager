@@ -1,5 +1,8 @@
-com\marioletsche\Callback.class
-com\marioletsche\DataBroker.class
-com\marioletsche\DataManager.class
-com\marioletsche\DBManager.class
+com\marioletsche\MQTTManager.class
+com\marioletsche\Interfaces\Callback.class
+com\marioletsche\Interfaces\NoSQLManager.class
+com\marioletsche\MongoManager.class
+com\marioletsche\AASBroker.class
+com\marioletsche\Interfaces\DataTransferManager.class
+com\marioletsche\Logging\DataLogger.class
 com\marioletsche\Main.class
