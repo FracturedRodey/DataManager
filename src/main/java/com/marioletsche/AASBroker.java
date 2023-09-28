@@ -6,6 +6,8 @@ import org.json.simple.JSONObject;
 import com.marioletsche.Interfaces.Callback;
 import com.marioletsche.Interfaces.DataTransferManager;
 import com.marioletsche.Interfaces.NoSQLManager;
+import com.marioletsche.Logging.DataLogger;
+
 
 import org.bson.types.ObjectId;
 
@@ -13,6 +15,7 @@ import org.bson.types.ObjectId;
 public class AASBroker implements Callback {
 	NoSQLManager database;
 	DataTransferManager data;
+	private DataLogger logger = new DataLogger();
 	
 	public AASBroker() throws MqttException {
 		this.database = new MongoManager(this, "shells");
@@ -64,10 +67,9 @@ public class AASBroker implements Callback {
 				Thread.sleep(1000);
 				this.database.close();
 				this.data.close();
-				System.out.println("Goodbye.");
 				System.exit(0);
 			} catch (InterruptedException e) {
-				System.err.println("Thread got interrupted" + e.getMessage());
+				logger.logError("Thread got interrupted" + e.getMessage());
 			}
 		});
 		thread.start();

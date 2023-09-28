@@ -12,6 +12,7 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
+import com.marioletsche.Logging.DataLogger;
 
 import org.json.simple.JSONObject;
 import org.bson.types.ObjectId;
@@ -21,6 +22,7 @@ public class MongoManager implements NoSQLManager {
 	private MongoDatabase database;
 	private MongoCollection<Document> collection;
 	private Callback callback;
+	private DataLogger logger = new DataLogger();
 	
 	public MongoManager(Callback callback, String collection) {
 		//Setup for the database
@@ -29,7 +31,7 @@ public class MongoManager implements NoSQLManager {
 		database = client.getDatabase("aas");
 		this.collection = database.getCollection(collection);
 		
-		System.out.println("Connection to Database successful.");
+		logger.logInfo("Connection to database was successful.");
 	}
 	
 	/*
@@ -37,7 +39,7 @@ public class MongoManager implements NoSQLManager {
 	 */
 	public void setCollection(String collection) {
 		this.collection = database.getCollection(collection);
-		System.out.println("Collection added.");
+		logger.logInfo("Collection of database has been changed");
 	}
 	
 	/*
@@ -51,7 +53,7 @@ public class MongoManager implements NoSQLManager {
 			document.put(key.toString(), json.get(key));
 		}
 		collection.insertOne(document);
-		System.out.println("Insertion into Database successful.");
+		logger.logInfo("Insertion into Database was successful." + "\n" + json.toString());
 	}
 	
 	public void read(ObjectId id) {
@@ -91,7 +93,7 @@ public class MongoManager implements NoSQLManager {
 			}
 		}
 		
-		System.out.println("Update in Database successful.");
+		logger.logInfo("Update in Database was successful" + "\n" + "The following data was updated: " + "\n" + json.toString());
 	}
 	
 	public void delete(ObjectId id) {
@@ -99,11 +101,11 @@ public class MongoManager implements NoSQLManager {
 		query.put("_id", id);
 		collection.deleteOne(query);
 		
-		System.out.println("Deletion was successful.");
+		logger.logInfo("Deletion of the following object was successful." + "\n" + id.toString());
 	}
 	
 	public void close() {
 		client.close();
-		System.out.println("Disconnected from database.");
+		logger.logInfo("Disconnected from database.");
 	}
 }

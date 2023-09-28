@@ -13,6 +13,8 @@ import org.bson.types.ObjectId;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import com.marioletsche.Logging.DataLogger;
+
 
 import com.marioletsche.Interfaces.Callback;
 import com.marioletsche.Interfaces.DataTransferManager;
@@ -27,6 +29,7 @@ public class MQTTManager implements DataTransferManager {
 	private static final String UPDATE_TOPIC = "updateTestAAS";
 	private static final String DELETE_TOPIC = "deleteTestAAS";
 	private boolean taggedToClose = false;
+	private DataLogger logger = new DataLogger();
 	
 	private IMqttClient publisher;
 	private MqttConnectOptions options;
@@ -41,11 +44,11 @@ public class MQTTManager implements DataTransferManager {
         options.setConnectionTimeout(10);
         publisher.connect(options);
         
-        System.out.println("Connection to Mqtt-Broker successful.");
+        logger.logInfo("Connection to Mqtt-Broker successful.");
         
         publisher.subscribe(CREATE_TOPIC, (unsure, msg) -> {
         	if (taggedToClose) {
-        		System.err.println("Cannot receive information while closing connection.");
+        		logger.logError("Cannot receive information while closing connection.");
         		return;
         	}
         	
@@ -62,7 +65,7 @@ public class MQTTManager implements DataTransferManager {
         // TODO: Maybe get rid of code duplication.
         publisher.subscribe(READ_TOPIC, (unsure, msg) -> {
         	if (taggedToClose) {
-        		System.err.println("Cannot receive information while closing connection.");
+        		logger.logError("Cannot receive information while closing connection.");
         		return;
         	}
         	
@@ -77,7 +80,7 @@ public class MQTTManager implements DataTransferManager {
         
         publisher.subscribe(UPDATE_TOPIC, (unsure, msg) -> {
         	if (taggedToClose) {
-        		System.err.println("Cannot receive information while closing connection.");
+        		logger.logError("Cannot receive information while closing connection.");
         		return;
         	}
         	
@@ -92,7 +95,7 @@ public class MQTTManager implements DataTransferManager {
         
         publisher.subscribe(DELETE_TOPIC, (unsure, msg) -> {
         	if (taggedToClose) {
-        		System.err.println("Cannot receive information while closing connection.");
+        		logger.logError("Cannot receive information while closing connection.");
         		return;
         	}
         	
@@ -111,7 +114,7 @@ public class MQTTManager implements DataTransferManager {
 	 */
 	public void create(String message) {
 		try {
-			System.out.println("Received create message from broker");
+			logger.logInfo("Received create message from broker");
             JSONParser parser = new JSONParser();
             JSONObject json = (JSONObject) parser.parse(message);
             
@@ -119,13 +122,13 @@ public class MQTTManager implements DataTransferManager {
             	callback.callbackCreate(json);
             }
         } catch (ParseException e) {
-        	System.err.println("Error parsing to JSON. Please verify the input.");
+        	logger.logError("Error parsing to JSON. Please verify the input." + "\n" + e.getMessage());
         	return;
         }           
 	}
 	
 	public void read(String message) {
-		System.out.println("Received read message from broker");
+		logger.logInfo("Received read message from broker");
 		ObjectId id = new ObjectId(message);
 		for (Callback callback : listeners) {
 			callback.callbackRead(id);
@@ -133,11 +136,11 @@ public class MQTTManager implements DataTransferManager {
 	}
 	
 	public void update(String message) {
-		System.out.println("Received update message from broker");
+		logger.logInfo("Received update message from broker");
 		String[] message_split = message.split(";");
 		
 		if (message_split.length < 2) {
-			System.out.println("Not enough parameters for an update");
+			logger.logError("Not enough parameters for an update");
 			return;
 		}
 		
@@ -150,13 +153,13 @@ public class MQTTManager implements DataTransferManager {
             	callback.callbackUpdate(id ,json);
             }
         } catch (ParseException e) {
-        	System.err.println("Error parsing to JSON. Please verify the input.");
+        	logger.logError("Error parsing to JSON. Please verify the input." + "\n" + e.getMessage());
         	return;
         }           
 	}
 	
 	public void delete(String message) {
-		System.out.println("Received delete message from broker.");
+		logger.logInfo("Received delete message from broker.");
 		
 		ObjectId id = new ObjectId(message);
 		for (Callback callback : listeners) {
@@ -172,13 +175,13 @@ public class MQTTManager implements DataTransferManager {
 		try {
 			publisher.publish(SEND_TOPIC, message);
 		} catch (MqttException e) {
-			System.err.println("Failed to send message to broker.");
+			logger.logError("Failed to send message to broker." + "\n" + e.getMessage());
 		}
 	}
 	
 	public boolean checkExit(String message) {
 		if (message.equals("exit")) {
-			System.out.println("Exit message received. Exiting the program...");
+			logger.logInfo("Exit message received. Exiting the program...");
         	for (Callback callback : listeners) {
         		taggedToClose = true;
         		callback.close();
@@ -196,9 +199,9 @@ public class MQTTManager implements DataTransferManager {
 			publisher.disconnect();
 			publisher.close();
 		} catch (MqttException e) {
-			System.err.println("Failed to close connection to broker");
+			logger.logError("Failed to close connection to broker" + "\n" + e.getMessage());
 			return;
 		}
-		System.out.println("Disconnected from broker.");
+		logger.logInfo("Disconnected from broker.");
 	}
 }

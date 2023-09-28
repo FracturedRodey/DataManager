@@ -3,18 +3,20 @@ package com.marioletsche;
 import java.util.Scanner;
 
 import org.eclipse.paho.client.mqttv3.MqttException;
+import com.marioletsche.Logging.DataLogger;
+
 
 public class Main {
 	private static volatile boolean exitFlag = false;
 	
 	public static void main(String[] args) {
-		System.out.println("Starting up...");
 		AASBroker broker = null;
+		DataLogger logger = new DataLogger();
 		
 		try {
 			broker = new AASBroker();
 		} catch(MqttException e) {
-			System.err.println("Something during insertion has failed.");
+			logger.logInfo("Something during instantiation has failed." + "\n" + e.getMessage());
 		}
 		
 		// Just for exiting
@@ -34,7 +36,7 @@ public class Main {
 			
 		}
 		
-		System.out.println("Exiting the program.");
+		logger.logInfo("Application is getting closed.");
 		if (broker != null) {
 			broker.close();
 		}
